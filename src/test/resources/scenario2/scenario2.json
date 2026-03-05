@@ -1,0 +1,62 @@
+{
+  "transactions": [
+    {
+      "id": "T1_scenario2",
+      "beginTimestamp": 1000,
+      "statements": [
+        {
+          "executionOrder": 1,
+          "type": "UPDATE",
+          "rawSql": "UPDATE TableB SET amount = amount + 1 WHERE description = ?",
+          "tableNames": ["TableB"],
+          "queryConditions": "description = 'electronics'",
+          "parameters": {
+            "sym_tableBDescription": "electronics"
+          },
+          "triggeringCodeLocation": "DeadlockScenario2Service.transactionT1:36"
+        },
+        {
+          "executionOrder": 2,
+          "type": "SELECT",
+          "rawSql": "SELECT * FROM TableA WHERE name = ?",
+          "tableNames": ["TableA"],
+          "queryConditions": "name = 'product_A'",
+          "parameters": {
+            "sym_tableAName": "product_A"
+          },
+          "triggeringCodeLocation": "DeadlockScenario2Service.transactionT1:40"
+        }
+      ],
+      "pathConditions": ["sym_rowCount > 0"]
+    },
+    {
+      "id": "T2_scenario2",
+      "beginTimestamp": 1001,
+      "statements": [
+        {
+          "executionOrder": 1,
+          "type": "UPDATE",
+          "rawSql": "UPDATE TableA SET value = value + 1 WHERE name = ?",
+          "tableNames": ["TableA"],
+          "queryConditions": "name = 'product_A'",
+          "parameters": {
+            "sym_tableAName": "product_A"
+          },
+          "triggeringCodeLocation": "DeadlockScenario2Service.transactionT2:51"
+        },
+        {
+          "executionOrder": 2,
+          "type": "SELECT",
+          "rawSql": "SELECT * FROM TableB WHERE description = ?",
+          "tableNames": ["TableB"],
+          "queryConditions": "description = 'electronics'",
+          "parameters": {
+            "sym_tableBDescription": "electronics"
+          },
+          "triggeringCodeLocation": "DeadlockScenario2Service.transactionT2:55"
+        }
+      ],
+      "pathConditions": ["sym_rowCount > 0"]
+    }
+  ]
+}

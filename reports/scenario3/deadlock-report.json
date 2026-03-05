@@ -1,0 +1,32 @@
+{
+  "totalDeadlocksFound" : 1,
+  "deadlocks" : [ {
+    "involvedTransactions" : [ "T1_scenario3", "T2_scenario3" ],
+    "conflictDescription" : "Deadlock cycle detected with 4 statements: INSERT on table 'Product' → DELETE on table 'Product' → INSERT on table 'Product' → DELETE on table 'Product'. Pattern: ORM write-behind reordering",
+    "satisfyingAssignment" : { },
+    "suggestedFix" : "Move forward ORM flush before transaction boundary",
+    "id" : 1,
+    "cycle" : [ {
+      "type" : "INSERT",
+      "conditions" : "INSERT",
+      "triggeringCode" : "DeadlockScenario3Service.deleteAndInsertProducts:52 -> productRepository.saveAll(newProducts)",
+      "table" : "Product"
+    }, {
+      "type" : "DELETE",
+      "conditions" : "name = 'widget'",
+      "triggeringCode" : "DeadlockScenario3Service.deleteAndInsertProducts:42 -> productRepository.deleteByName(name)",
+      "table" : "Product"
+    }, {
+      "type" : "INSERT",
+      "conditions" : "INSERT",
+      "triggeringCode" : "DeadlockScenario3Service.deleteAndInsertProducts:52 -> productRepository.saveAll(newProducts)",
+      "table" : "Product"
+    }, {
+      "type" : "DELETE",
+      "conditions" : "name = 'widget'",
+      "triggeringCode" : "DeadlockScenario3Service.deleteAndInsertProducts:42 -> productRepository.deleteByName(name)",
+      "table" : "Product"
+    } ]
+  } ],
+  "timestamp" : "2026-02-19T00:20:18"
+}

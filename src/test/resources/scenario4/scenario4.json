@@ -1,0 +1,69 @@
+{
+  "transactions": [
+    {
+      "id": "T1_scenario4",
+      "beginTimestamp": 3000,
+      "statements": [
+        {
+          "executionOrder": 1,
+          "type": "SELECT",
+          "rawSql": "SELECT oi.*, p.* FROM OrderItem oi JOIN Product p ON p.id = oi.product_id WHERE p.name = ? OR p.id = ?",
+          "tableNames": ["OrderItem", "Product"],
+          "queryConditions": "name = 'gadget' OR id = 10",
+          "parameters": {
+            "sym_productName": "gadget",
+            "sym_productId": 10
+          },
+          "triggeringCodeLocation": "DeadlockScenario4Service.findOrderItemsByProductIdWithJoin:40 -> orderItemRepository.findByProduct_NameOrProduct_Id(productId.toString(), productId)"
+        },
+        {
+          "executionOrder": 2,
+          "type": "SELECT",
+          "rawSql": "SELECT * FROM Product WHERE id = ?",
+          "tableNames": ["Product"],
+          "queryConditions": "id = 10",
+          "parameters": {
+            "sym_productId": 10
+          },
+          "triggeringCodeLocation": "DeadlockScenario4Service.findOrderItemsByProductIdWithJoin:48 -> item.getProduct().getName()"
+        }
+      ],
+      "pathConditions": [
+        "sym_productId > 0"
+      ]
+    },
+    {
+      "id": "T2_scenario4",
+      "beginTimestamp": 3001,
+      "statements": [
+        {
+          "executionOrder": 1,
+          "type": "SELECT",
+          "rawSql": "SELECT * FROM Product WHERE id = ?",
+          "tableNames": ["Product"],
+          "queryConditions": "id = 10",
+          "parameters": {
+            "sym_productId": 10
+          },
+          "triggeringCodeLocation": "DeadlockScenario4Service.updateProduct:65 -> productRepository.findById(productId)"
+        },
+        {
+          "executionOrder": 2,
+          "type": "UPDATE",
+          "rawSql": "UPDATE Product SET name = ?, price = ? WHERE id = ?",
+          "tableNames": ["Product"],
+          "queryConditions": "id = 10",
+          "parameters": {
+            "sym_productId": 10,
+            "sym_newName": "gadget_v2",
+            "sym_newPrice": 99.99
+          },
+          "triggeringCodeLocation": "DeadlockScenario4Service.updateProduct:69 -> productRepository.save(product)"
+        }
+      ],
+      "pathConditions": [
+        "sym_productId > 0"
+      ]
+    }
+  ]
+}

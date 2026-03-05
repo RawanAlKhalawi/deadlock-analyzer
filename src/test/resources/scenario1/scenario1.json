@@ -1,0 +1,66 @@
+{
+  "transactions": [
+    {
+      "id": "T1_scenario1",
+      "beginTimestamp": 1000,
+      "statements": [
+        {
+          "executionOrder": 1,
+          "type": "SELECT",
+          "rawSql": "SELECT ut1_0.id, ut1_0.amount, ut1_0.created_at, ut1_0.status, ut1_0.user_id FROM user_transaction ut1_0 WHERE ut1_0.user_id = ?",
+          "tableNames": ["user_transaction"],
+          "queryConditions": "user_id = 42",
+          "parameters": {
+            "sym_userId": 42
+          },
+          "triggeringCodeLocation": "DeadlockScenario1Service.getTransactionsByUserId:63 -> userTransactionRepository.findByUserId(userId)"
+        },
+        {
+          "executionOrder": 2,
+          "type": "UPDATE",
+          "rawSql": "UPDATE user_transaction SET amount = (amount + 1) WHERE user_id = ?",
+          "tableNames": ["user_transaction"],
+          "queryConditions": "user_id = 42",
+          "parameters": {
+            "sym_userId": 42
+          },
+          "triggeringCodeLocation": "DeadlockScenario1Service.processTransactionWithExternalApiCall:41 -> userTransactionRepository.updateAmount(userId)"
+        }
+      ],
+      "pathConditions": [
+        "sym_userId > 0"
+      ]
+    },
+    {
+      "id": "T2_scenario1",
+      "beginTimestamp": 1001,
+      "statements": [
+        {
+          "executionOrder": 1,
+          "type": "SELECT",
+          "rawSql": "SELECT ut1_0.id, ut1_0.amount, ut1_0.created_at, ut1_0.status, ut1_0.user_id FROM user_transaction ut1_0 WHERE ut1_0.user_id = ?",
+          "tableNames": ["user_transaction"],
+          "queryConditions": "user_id = 42",
+          "parameters": {
+            "sym_userId": 42
+          },
+          "triggeringCodeLocation": "DeadlockScenario1Service.getTransactionsByUserId:63 -> userTransactionRepository.findByUserId(userId)"
+        },
+        {
+          "executionOrder": 2,
+          "type": "UPDATE",
+          "rawSql": "UPDATE user_transaction SET amount = (amount + 1) WHERE user_id = ?",
+          "tableNames": ["user_transaction"],
+          "queryConditions": "user_id = 42",
+          "parameters": {
+            "sym_userId": 42
+          },
+          "triggeringCodeLocation": "DeadlockScenario1Service.processTransactionWithExternalApiCall:41 -> userTransactionRepository.updateAmount(userId)"
+        }
+      ],
+      "pathConditions": [
+        "sym_userId > 0"
+      ]
+    }
+  ]
+}

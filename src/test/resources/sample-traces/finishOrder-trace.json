@@ -1,0 +1,74 @@
+{
+  "transactions": [
+    {
+      "id": "T1_finishOrder",
+      "beginTimestamp": 4000,
+      "statements": [
+        {
+          "executionOrder": 1,
+          "type": "SELECT",
+          "rawSql": "SELECT * FROM OrderItem oi JOIN Order o ON o.ID = oi.O_ID JOIN Product p ON p.ID = oi.P_ID WHERE oi.O_ID = ?",
+          "tableNames": ["OrderItem", "Order", "Product"],
+          "queryConditions": "O_ID = 1",
+          "parameters": {
+            "sym_orderId": 1
+          },
+          "resultReference": "res4",
+          "triggeringCodeLocation": "finishOrder:7 -> o.getOrdItems() triggers Q4 via lazy loading"
+        },
+        {
+          "executionOrder": 2,
+          "type": "UPDATE",
+          "rawSql": "UPDATE Product SET QTY = ? WHERE ID = ?",
+          "tableNames": ["Product"],
+          "queryConditions": "ID = 10",
+          "parameters": {
+            "sym_productId": 10,
+            "sym_newQty": 5
+          },
+          "resultReference": "res6",
+          "triggeringCodeLocation": "updateQuantity:19 -> p.setQty(p_qty - oi_qty) triggers Q6 via ORM write-behind"
+        }
+      ],
+      "pathConditions": [
+        "sym_orderId > 0",
+        "sym_qty >= sym_oiQty"
+      ]
+    },
+    {
+      "id": "T2_finishOrder",
+      "beginTimestamp": 4001,
+      "statements": [
+        {
+          "executionOrder": 1,
+          "type": "SELECT",
+          "rawSql": "SELECT * FROM OrderItem oi JOIN Order o ON o.ID = oi.O_ID JOIN Product p ON p.ID = oi.P_ID WHERE oi.O_ID = ?",
+          "tableNames": ["OrderItem", "Order", "Product"],
+          "queryConditions": "O_ID = 1",
+          "parameters": {
+            "sym_orderId": 1
+          },
+          "resultReference": "res4",
+          "triggeringCodeLocation": "finishOrder:7 -> o.getOrdItems() triggers Q4 via lazy loading"
+        },
+        {
+          "executionOrder": 2,
+          "type": "UPDATE",
+          "rawSql": "UPDATE Product SET QTY = ? WHERE ID = ?",
+          "tableNames": ["Product"],
+          "queryConditions": "ID = 10",
+          "parameters": {
+            "sym_productId": 10,
+            "sym_newQty": 3
+          },
+          "resultReference": "res6",
+          "triggeringCodeLocation": "updateQuantity:19 -> p.setQty(p_qty - oi_qty) triggers Q6 via ORM write-behind"
+        }
+      ],
+      "pathConditions": [
+        "sym_orderId > 0",
+        "sym_qty >= sym_oiQty"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "transactions": [
+    {
+      "id": "T1_scenario3",
+      "beginTimestamp": 2000,
+      "statements": [
+        {
+          "executionOrder": 1,
+          "type": "DELETE",
+          "rawSql": "DELETE FROM Product WHERE name = ?",
+          "tableNames": ["Product"],
+          "queryConditions": "name = 'widget'",
+          "parameters": {
+            "sym_productName": "widget"
+          },
+          "triggeringCodeLocation": "DeadlockScenario3Service.deleteAndInsertProducts:42 -> productRepository.deleteByName(name)"
+        },
+        {
+          "executionOrder": 2,
+          "type": "INSERT",
+          "rawSql": "INSERT INTO Product (name, quantity, price) VALUES (?, ?, ?)",
+          "tableNames": ["Product"],
+          "queryConditions": "INSERT",
+          "parameters": {
+            "sym_productName": "widget",
+            "sym_quantity": 50,
+            "sym_price": 99.99
+          },
+          "triggeringCodeLocation": "DeadlockScenario3Service.deleteAndInsertProducts:52 -> productRepository.saveAll(newProducts)"
+        }
+      ],
+      "pathConditions": [
+        "sym_batchSize > 0"
+      ]
+    },
+    {
+      "id": "T2_scenario3",
+      "beginTimestamp": 2001,
+      "statements": [
+        {
+          "executionOrder": 1,
+          "type": "DELETE",
+          "rawSql": "DELETE FROM Product WHERE name = ?",
+          "tableNames": ["Product"],
+          "queryConditions": "name = 'widget'",
+          "parameters": {
+            "sym_productName": "widget"
+          },
+          "triggeringCodeLocation": "DeadlockScenario3Service.deleteAndInsertProducts:42 -> productRepository.deleteByName(name)"
+        },
+        {
+          "executionOrder": 2,
+          "type": "INSERT",
+          "rawSql": "INSERT INTO Product (name, quantity, price) VALUES (?, ?, ?)",
+          "tableNames": ["Product"],
+          "queryConditions": "INSERT",
+          "parameters": {
+            "sym_productName": "widget",
+            "sym_quantity": 75,
+            "sym_price": 49.99
+          },
+          "triggeringCodeLocation": "DeadlockScenario3Service.deleteAndInsertProducts:52 -> productRepository.saveAll(newProducts)"
+        }
+      ],
+      "pathConditions": [
+        "sym_batchSize > 0"
+      ]
+    }
+  ]
+}

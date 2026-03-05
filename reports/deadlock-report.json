@@ -1,0 +1,32 @@
+{
+  "totalDeadlocksFound" : 1,
+  "deadlocks" : [ {
+    "involvedTransactions" : [ "T2_finishOrder", "T1_finishOrder" ],
+    "conflictDescription" : "Deadlock cycle detected with 4 statements: UPDATE on table 'Product' → SELECT on table 'OrderItem, Order, Product' → UPDATE on table 'Product' → SELECT on table 'OrderItem, Order, Product'. Pattern: Concurrent UPDATEs in different order",
+    "satisfyingAssignment" : { },
+    "suggestedFix" : "Use application-level locks to enforce serial execution",
+    "id" : 1,
+    "cycle" : [ {
+      "type" : "UPDATE",
+      "conditions" : "ID = 10",
+      "triggeringCode" : "updateQuantity:19 -> p.setQty(p_qty - oi_qty) triggers Q6 via ORM write-behind",
+      "table" : "Product"
+    }, {
+      "type" : "SELECT",
+      "conditions" : "O_ID = 1",
+      "triggeringCode" : "finishOrder:7 -> o.getOrdItems() triggers Q4 via lazy loading",
+      "table" : "Product"
+    }, {
+      "type" : "UPDATE",
+      "conditions" : "ID = 10",
+      "triggeringCode" : "updateQuantity:19 -> p.setQty(p_qty - oi_qty) triggers Q6 via ORM write-behind",
+      "table" : "Product"
+    }, {
+      "type" : "SELECT",
+      "conditions" : "O_ID = 1",
+      "triggeringCode" : "finishOrder:7 -> o.getOrdItems() triggers Q4 via lazy loading",
+      "table" : "Product"
+    } ]
+  } ],
+  "timestamp" : "2026-02-19T00:48:29"
+}

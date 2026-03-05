@@ -1,0 +1,32 @@
+{
+  "totalDeadlocksFound" : 1,
+  "deadlocks" : [ {
+    "involvedTransactions" : [ "T1_scenario2", "T2_scenario2" ],
+    "conflictDescription" : "Deadlock cycle detected with 4 statements: UPDATE on table 'TableB' → SELECT on table 'TableA' → UPDATE on table 'TableA' → SELECT on table 'TableB'. Pattern: Concurrent UPDATEs in different order",
+    "satisfyingAssignment" : { },
+    "suggestedFix" : "Use application-level locks to enforce serial execution",
+    "id" : 1,
+    "cycle" : [ {
+      "type" : "UPDATE",
+      "conditions" : "description = 'electronics'",
+      "triggeringCode" : "DeadlockScenario2Service.transactionT1:36",
+      "table" : "TableB"
+    }, {
+      "type" : "SELECT",
+      "conditions" : "name = 'product_A'",
+      "triggeringCode" : "DeadlockScenario2Service.transactionT1:40",
+      "table" : "TableA"
+    }, {
+      "type" : "UPDATE",
+      "conditions" : "name = 'product_A'",
+      "triggeringCode" : "DeadlockScenario2Service.transactionT2:51",
+      "table" : "TableA"
+    }, {
+      "type" : "SELECT",
+      "conditions" : "description = 'electronics'",
+      "triggeringCode" : "DeadlockScenario2Service.transactionT2:55",
+      "table" : "TableB"
+    } ]
+  } ],
+  "timestamp" : "2026-02-19T00:20:44"
+}

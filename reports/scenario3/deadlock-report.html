@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Deadlock Analysis Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+    h1 { color: #333; }
+    h2 { color: #555; margin-top: 30px; }
+    table { border-collapse: collapse; width: 100%; margin: 20px 0; background-color: white; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background-color: #4CAF50; color: white; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    .deadlock-cycle { color: #d32f2f; font-weight: bold; }
+    .suggested-fix { color: #388e3c; font-weight: bold; background-color: #e8f5e9; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    .conflict-description { background-color: #fff3e0; padding: 10px; border-left: 4px solid #ff9800; margin: 10px 0; }
+    .cycle-details { background-color: #ffebee; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    .statement { margin: 5px 0; padding: 5px; background-color: white; border-left: 3px solid #d32f2f; }
+    .summary { background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <h1>Deadlock Analysis Report</h1>
+  <div class="summary">
+    <p><strong>Generated:</strong> 2026-02-19 00:20:18</p>
+    <p><strong>Total Deadlocks Found:</strong> 1</p>
+  </div>
+  <h2>Summary</h2>
+  <table>
+    <tr>
+      <th>ID</th>
+      <th>Involved Transactions</th>
+      <th>Tables</th>
+      <th>Suggested Fix</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>T1_scenario3, T2_scenario3</td>
+      <td>Product</td>
+      <td>Move forward ORM flush before transaction boundary</td>
+    </tr>
+  </table>
+  <h2>Detailed Analysis</h2>
+  <div style="margin: 30px 0; padding: 20px; background-color: white; border-radius: 5px;">
+    <h3>Deadlock #1</h3>
+    <div class="conflict-description">
+      <strong>Conflict:</strong> Deadlock cycle detected with 4 statements: INSERT on table &#39;Product&#39; → DELETE on table &#39;Product&#39; → INSERT on table &#39;Product&#39; → DELETE on table &#39;Product&#39;. Pattern: ORM write-behind reordering
+    </div>
+    <div class="cycle-details">
+      <p class="deadlock-cycle">Deadlock Cycle:</p>
+      <div class="statement">
+        <strong>1.</strong> <strong>INSERT</strong> on table <strong>Product</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE INSERT<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario3Service.deleteAndInsertProducts:52 -&gt; productRepository.saveAll(newProducts)</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>2.</strong> <strong>DELETE</strong> on table <strong>Product</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE name = &#39;widget&#39;<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario3Service.deleteAndInsertProducts:42 -&gt; productRepository.deleteByName(name)</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>3.</strong> <strong>INSERT</strong> on table <strong>Product</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE INSERT<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario3Service.deleteAndInsertProducts:52 -&gt; productRepository.saveAll(newProducts)</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>4.</strong> <strong>DELETE</strong> on table <strong>Product</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE name = &#39;widget&#39;<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario3Service.deleteAndInsertProducts:42 -&gt; productRepository.deleteByName(name)</em>
+      </div>
+    </div>
+    <div class="suggested-fix">
+      <strong>💡 Suggested Fix:</strong> Move forward ORM flush before transaction boundary
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "totalDeadlocksFound" : 1,
+  "deadlocks" : [ {
+    "involvedTransactions" : [ "T2_scenario1", "T1_scenario1" ],
+    "conflictDescription" : "Deadlock cycle detected with 4 statements: UPDATE on table 'user_transaction' → SELECT on table 'user_transaction' → UPDATE on table 'user_transaction' → SELECT on table 'user_transaction'. Pattern: Concurrent UPDATEs in different order",
+    "satisfyingAssignment" : { },
+    "suggestedFix" : "Use application-level locks to enforce serial execution",
+    "id" : 1,
+    "cycle" : [ {
+      "type" : "UPDATE",
+      "conditions" : "user_id = 42",
+      "triggeringCode" : "DeadlockScenario1Service.processTransactionWithExternalApiCall:41 -> userTransactionRepository.updateAmount(userId)",
+      "table" : "user_transaction"
+    }, {
+      "type" : "SELECT",
+      "conditions" : "user_id = 42",
+      "triggeringCode" : "DeadlockScenario1Service.getTransactionsByUserId:63 -> userTransactionRepository.findByUserId(userId)",
+      "table" : "user_transaction"
+    }, {
+      "type" : "UPDATE",
+      "conditions" : "user_id = 42",
+      "triggeringCode" : "DeadlockScenario1Service.processTransactionWithExternalApiCall:41 -> userTransactionRepository.updateAmount(userId)",
+      "table" : "user_transaction"
+    }, {
+      "type" : "SELECT",
+      "conditions" : "user_id = 42",
+      "triggeringCode" : "DeadlockScenario1Service.getTransactionsByUserId:63 -> userTransactionRepository.findByUserId(userId)",
+      "table" : "user_transaction"
+    } ]
+  } ],
+  "timestamp" : "2026-02-19T00:59:43"
+}
