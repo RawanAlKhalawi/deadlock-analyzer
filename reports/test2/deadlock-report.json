@@ -1,0 +1,113 @@
+{
+  "totalDeadlocksFound" : 4,
+  "deadlocks" : [ {
+    "involvedTransactions" : [ "T2_transactionT1", "T1_transactionT2" ],
+    "conflictDescription" : "Deadlock cycle detected with 4 statements: SELECT on table 'table_a' → UPDATE on table 'table_a' → SELECT on table 'table_b' → UPDATE on table 'table_b'. Pattern: Concurrent UPDATEs in different order",
+    "satisfyingAssignment" : { },
+    "suggestedFix" : "Use application-level locks to enforce serial execution",
+    "id" : 1,
+    "cycle" : [ {
+      "type" : "SELECT",
+      "conditions" : "a.name = :name",
+      "triggeringCode" : "DeadlockScenario2Service.transactionT1 → TableBRepository.updateAmountByDescription → tableBRepository.updateAmountByDescription → TableARepository.findAllByName → tableARepository.findAllByName",
+      "table" : "table_a"
+    }, {
+      "type" : "UPDATE",
+      "conditions" : "a.name = :name",
+      "triggeringCode" : "DeadlockScenario2Service.transactionT2 → TableARepository.updateValueByName → tableARepository.updateValueByName → TableBRepository.findAllByDescription → tableBRepository.findAllByDescription",
+      "table" : "table_a"
+    }, {
+      "type" : "SELECT",
+      "conditions" : "b.description = :description",
+      "triggeringCode" : "DeadlockScenario2Service.transactionT2 → TableARepository.updateValueByName → tableARepository.updateValueByName → TableBRepository.findAllByDescription → tableBRepository.findAllByDescription",
+      "table" : "table_b"
+    }, {
+      "type" : "UPDATE",
+      "conditions" : "b.description = :description",
+      "triggeringCode" : "DeadlockScenario2Service.transactionT1 → TableBRepository.updateAmountByDescription → tableBRepository.updateAmountByDescription → TableARepository.findAllByName → tableARepository.findAllByName",
+      "table" : "table_b"
+    } ]
+  }, {
+    "involvedTransactions" : [ "T1_processTransactionWithExternalApiCall", "T2_processTransactionWithExternalApiCall" ],
+    "conflictDescription" : "Deadlock cycle detected with 4 statements: UPDATE on table 'user_transaction' → UPDATE on table 'user_transaction' → INSERT on table 'user_transaction' → UPDATE on table 'user_transaction'. Pattern: Concurrent UPDATEs in different order",
+    "satisfyingAssignment" : { },
+    "suggestedFix" : "Use application-level locks to enforce serial execution",
+    "id" : 2,
+    "cycle" : [ {
+      "type" : "UPDATE",
+      "conditions" : "u.userId = :userId",
+      "triggeringCode" : "DeadlockScenario1Service.processTransactionWithExternalApiCall → UserTransactionRepository.updateAmount → userTransactionRepository.updateAmount",
+      "table" : "user_transaction"
+    }, {
+      "type" : "UPDATE",
+      "conditions" : "id = ?",
+      "triggeringCode" : "DeadlockScenario1Service.processTransactionWithExternalApiCall → UserTransactionRepository.updateAmount → userTransactionRepository.updateAmount",
+      "table" : "user_transaction"
+    }, {
+      "type" : "INSERT",
+      "conditions" : "",
+      "triggeringCode" : "DeadlockScenario1Service.processTransactionWithExternalApiCall → UserTransactionRepository.updateAmount → userTransactionRepository.updateAmount",
+      "table" : "user_transaction"
+    }, {
+      "type" : "UPDATE",
+      "conditions" : "u.userId = :userId",
+      "triggeringCode" : "DeadlockScenario1Service.processTransactionWithExternalApiCall → UserTransactionRepository.updateAmount → userTransactionRepository.updateAmount",
+      "table" : "user_transaction"
+    } ]
+  }, {
+    "involvedTransactions" : [ "T2_deleteAndInsertProducts", "T2_updateProduct" ],
+    "conflictDescription" : "Deadlock cycle detected with 4 statements: DELETE on table 'product' → INSERT on table 'product' → SELECT on table 'product' → UPDATE on table 'product'. Pattern: ORM write-behind reordering",
+    "satisfyingAssignment" : { },
+    "suggestedFix" : "Move forward ORM flush before transaction boundary",
+    "id" : 3,
+    "cycle" : [ {
+      "type" : "DELETE",
+      "conditions" : "p.name = :name",
+      "triggeringCode" : "DeadlockScenario3Service.deleteAndInsertProducts → ProductRepository.deleteByName → productRepository.deleteByName",
+      "table" : "product"
+    }, {
+      "type" : "INSERT",
+      "conditions" : "",
+      "triggeringCode" : "DeadlockScenario3Service.deleteAndInsertProducts → ProductRepository.deleteByName → productRepository.deleteByName",
+      "table" : "product"
+    }, {
+      "type" : "SELECT",
+      "conditions" : "id = ?",
+      "triggeringCode" : "DeadlockScenario4Service.updateProduct",
+      "table" : "product"
+    }, {
+      "type" : "UPDATE",
+      "conditions" : "id = ?",
+      "triggeringCode" : "DeadlockScenario4Service.updateProduct",
+      "table" : "product"
+    } ]
+  }, {
+    "involvedTransactions" : [ "T1_updateProduct", "T2_updateProduct" ],
+    "conflictDescription" : "Deadlock cycle detected with 4 statements: UPDATE on table 'product' → UPDATE on table 'product' → SELECT on table 'product' → UPDATE on table 'product'. Pattern: Concurrent UPDATEs in different order",
+    "satisfyingAssignment" : { },
+    "suggestedFix" : "Use application-level locks to enforce serial execution",
+    "id" : 4,
+    "cycle" : [ {
+      "type" : "UPDATE",
+      "conditions" : "id = ?",
+      "triggeringCode" : "DeadlockScenario4Service.updateProduct",
+      "table" : "product"
+    }, {
+      "type" : "UPDATE",
+      "conditions" : "id = ?",
+      "triggeringCode" : "DeadlockScenario4Service.updateProduct",
+      "table" : "product"
+    }, {
+      "type" : "SELECT",
+      "conditions" : "id = ?",
+      "triggeringCode" : "DeadlockScenario4Service.updateProduct",
+      "table" : "product"
+    }, {
+      "type" : "UPDATE",
+      "conditions" : "id = ?",
+      "triggeringCode" : "DeadlockScenario4Service.updateProduct",
+      "table" : "product"
+    } ]
+  } ],
+  "timestamp" : "2026-03-29T21:10:30"
+}

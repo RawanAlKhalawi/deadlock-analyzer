@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Three-phase deadlock detection algorithm following the WeSEER paper.
@@ -265,9 +266,14 @@ public class DeadlockAnalyzer {
             for (SQLStatement stmt : cycle) {
                 String txId = stmt.getTransactionId();
                 if (txId != null) {
-                    txId = txId.replaceAll("_instance2$", "");
+                    txId = txId
+                        .replaceAll("^T\\d+_", "")      // strip T1_, T2_, T3_... copy prefix
+                        .replaceAll("_instance2$", ""); // strip duplicate suffix
                 }
-                tokens.add(txId + "_" + stmt.getStatementType() + "_" + stmt.getTableName());
+                String tables = stmt.getTableNames() != null
+                    ? String.join("|", stmt.getTableNames().stream().sorted().collect(Collectors.toList()))
+                    : "null";
+                tokens.add(txId + "_" + stmt.getStatementType() + "_" + tables);
             }
             // Find the lexicographically smallest rotation
             List<String> smallest = new ArrayList<>(tokens);
@@ -280,12 +286,57 @@ public class DeadlockAnalyzer {
             }
             String key = String.join(",", smallest);
             
+            // Detect repeated-unit expansions: if cycle is a sub-pattern repeated N/K times, skip it
+            boolean isRepeatedExpansion = false;
+            int n = smallest.size();
+            for (int k = 1; k < n; k++) {
+                if (n % k == 0) {
+                    boolean repeated = true;
+                    for (int idx = k; idx < n; idx++) {
+                        if (!smallest.get(idx).equals(smallest.get(idx % k))) {
+                            repeated = false;
+                            break;
+                        }
+                    }
+                    if (repeated) {
+                        isRepeatedExpansion = true;
+                        break;
+                    }
+                }
+            }
+            if (isRepeatedExpansion) continue;
+            
             if (seenKeys.add(key)) {
                 unique.add(cycle);
             }
         }
-        
-        return unique;
+
+        // Second pass: for each unique set of canonical transaction types,
+        // keep only the shortest cycle. Longer cycles involving the same
+        // transaction methods are redundant for reporting purposes.
+        Map<String, List<SQLStatement>> shortestPerTxSet = new LinkedHashMap<>();
+
+        for (List<SQLStatement> cycle : unique) {
+            // Build a sorted, deduplicated set of canonical transaction method names
+            Set<String> txTypes = new TreeSet<>();
+            for (SQLStatement stmt : cycle) {
+                String txId = stmt.getTransactionId();
+                if (txId != null) {
+                    txId = txId
+                        .replaceAll("^T\\d+_", "")
+                        .replaceAll("_instance2$", "");
+                    txTypes.add(txId);
+                }
+            }
+            String txSetKey = String.join(",", txTypes);
+
+            List<SQLStatement> existing = shortestPerTxSet.get(txSetKey);
+            if (existing == null || cycle.size() < existing.size()) {
+                shortestPerTxSet.put(txSetKey, cycle);
+            }
+        }
+
+        return new ArrayList<>(shortestPerTxSet.values());
     }
     
     /**

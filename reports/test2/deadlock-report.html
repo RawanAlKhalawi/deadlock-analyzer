@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Deadlock Analysis Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+    h1 { color: #333; }
+    h2 { color: #555; margin-top: 30px; }
+    table { border-collapse: collapse; width: 100%; margin: 20px 0; background-color: white; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background-color: #4CAF50; color: white; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    .deadlock-cycle { color: #d32f2f; font-weight: bold; }
+    .suggested-fix { color: #388e3c; font-weight: bold; background-color: #e8f5e9; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    .conflict-description { background-color: #fff3e0; padding: 10px; border-left: 4px solid #ff9800; margin: 10px 0; }
+    .cycle-details { background-color: #ffebee; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    .statement { margin: 5px 0; padding: 5px; background-color: white; border-left: 3px solid #d32f2f; }
+    .summary { background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <h1>Deadlock Analysis Report</h1>
+  <div class="summary">
+    <p><strong>Generated:</strong> 2026-03-29 21:10:30</p>
+    <p><strong>Total Deadlocks Found:</strong> 4</p>
+  </div>
+  <h2>Summary</h2>
+  <table>
+    <tr>
+      <th>ID</th>
+      <th>Involved Transactions</th>
+      <th>Tables</th>
+      <th>Suggested Fix</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>T2_transactionT1, T1_transactionT2</td>
+      <td>table_a, table_b</td>
+      <td>Use application-level locks to enforce serial execution</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>T1_processTransactionWithExternalApiCall, T2_processTransactionWithExternalApiCall</td>
+      <td>user_transaction</td>
+      <td>Use application-level locks to enforce serial execution</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>T2_deleteAndInsertProducts, T2_updateProduct</td>
+      <td>product</td>
+      <td>Move forward ORM flush before transaction boundary</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>T1_updateProduct, T2_updateProduct</td>
+      <td>product</td>
+      <td>Use application-level locks to enforce serial execution</td>
+    </tr>
+  </table>
+  <h2>Detailed Analysis</h2>
+  <div style="margin: 30px 0; padding: 20px; background-color: white; border-radius: 5px;">
+    <h3>Deadlock #1</h3>
+    <div class="conflict-description">
+      <strong>Conflict:</strong> Deadlock cycle detected with 4 statements: SELECT on table &#39;table_a&#39; → UPDATE on table &#39;table_a&#39; → SELECT on table &#39;table_b&#39; → UPDATE on table &#39;table_b&#39;. Pattern: Concurrent UPDATEs in different order
+    </div>
+    <div class="cycle-details">
+      <p class="deadlock-cycle">Deadlock Cycle:</p>
+      <div class="statement">
+        <strong>1.</strong> <strong>SELECT</strong> on table <strong>table_a</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE a.name = :name<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario2Service.transactionT1 → TableBRepository.updateAmountByDescription → tableBRepository.updateAmountByDescription → TableARepository.findAllByName → tableARepository.findAllByName</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>2.</strong> <strong>UPDATE</strong> on table <strong>table_a</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE a.name = :name<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario2Service.transactionT2 → TableARepository.updateValueByName → tableARepository.updateValueByName → TableBRepository.findAllByDescription → tableBRepository.findAllByDescription</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>3.</strong> <strong>SELECT</strong> on table <strong>table_b</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE b.description = :description<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario2Service.transactionT2 → TableARepository.updateValueByName → tableARepository.updateValueByName → TableBRepository.findAllByDescription → tableBRepository.findAllByDescription</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>4.</strong> <strong>UPDATE</strong> on table <strong>table_b</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE b.description = :description<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario2Service.transactionT1 → TableBRepository.updateAmountByDescription → tableBRepository.updateAmountByDescription → TableARepository.findAllByName → tableARepository.findAllByName</em>
+      </div>
+    </div>
+    <div class="suggested-fix">
+      <strong>💡 Suggested Fix:</strong> Use application-level locks to enforce serial execution
+    </div>
+  </div>
+  <div style="margin: 30px 0; padding: 20px; background-color: white; border-radius: 5px;">
+    <h3>Deadlock #2</h3>
+    <div class="conflict-description">
+      <strong>Conflict:</strong> Deadlock cycle detected with 4 statements: UPDATE on table &#39;user_transaction&#39; → UPDATE on table &#39;user_transaction&#39; → INSERT on table &#39;user_transaction&#39; → UPDATE on table &#39;user_transaction&#39;. Pattern: Concurrent UPDATEs in different order
+    </div>
+    <div class="cycle-details">
+      <p class="deadlock-cycle">Deadlock Cycle:</p>
+      <div class="statement">
+        <strong>1.</strong> <strong>UPDATE</strong> on table <strong>user_transaction</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE u.userId = :userId<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario1Service.processTransactionWithExternalApiCall → UserTransactionRepository.updateAmount → userTransactionRepository.updateAmount</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>2.</strong> <strong>UPDATE</strong> on table <strong>user_transaction</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE id = ?<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario1Service.processTransactionWithExternalApiCall → UserTransactionRepository.updateAmount → userTransactionRepository.updateAmount</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>3.</strong> <strong>INSERT</strong> on table <strong>user_transaction</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario1Service.processTransactionWithExternalApiCall → UserTransactionRepository.updateAmount → userTransactionRepository.updateAmount</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>4.</strong> <strong>UPDATE</strong> on table <strong>user_transaction</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE u.userId = :userId<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario1Service.processTransactionWithExternalApiCall → UserTransactionRepository.updateAmount → userTransactionRepository.updateAmount</em>
+      </div>
+    </div>
+    <div class="suggested-fix">
+      <strong>💡 Suggested Fix:</strong> Use application-level locks to enforce serial execution
+    </div>
+  </div>
+  <div style="margin: 30px 0; padding: 20px; background-color: white; border-radius: 5px;">
+    <h3>Deadlock #3</h3>
+    <div class="conflict-description">
+      <strong>Conflict:</strong> Deadlock cycle detected with 4 statements: DELETE on table &#39;product&#39; → INSERT on table &#39;product&#39; → SELECT on table &#39;product&#39; → UPDATE on table &#39;product&#39;. Pattern: ORM write-behind reordering
+    </div>
+    <div class="cycle-details">
+      <p class="deadlock-cycle">Deadlock Cycle:</p>
+      <div class="statement">
+        <strong>1.</strong> <strong>DELETE</strong> on table <strong>product</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE p.name = :name<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario3Service.deleteAndInsertProducts → ProductRepository.deleteByName → productRepository.deleteByName</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>2.</strong> <strong>INSERT</strong> on table <strong>product</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario3Service.deleteAndInsertProducts → ProductRepository.deleteByName → productRepository.deleteByName</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>3.</strong> <strong>SELECT</strong> on table <strong>product</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE id = ?<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario4Service.updateProduct</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>4.</strong> <strong>UPDATE</strong> on table <strong>product</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE id = ?<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario4Service.updateProduct</em>
+      </div>
+    </div>
+    <div class="suggested-fix">
+      <strong>💡 Suggested Fix:</strong> Move forward ORM flush before transaction boundary
+    </div>
+  </div>
+  <div style="margin: 30px 0; padding: 20px; background-color: white; border-radius: 5px;">
+    <h3>Deadlock #4</h3>
+    <div class="conflict-description">
+      <strong>Conflict:</strong> Deadlock cycle detected with 4 statements: UPDATE on table &#39;product&#39; → UPDATE on table &#39;product&#39; → SELECT on table &#39;product&#39; → UPDATE on table &#39;product&#39;. Pattern: Concurrent UPDATEs in different order
+    </div>
+    <div class="cycle-details">
+      <p class="deadlock-cycle">Deadlock Cycle:</p>
+      <div class="statement">
+        <strong>1.</strong> <strong>UPDATE</strong> on table <strong>product</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE id = ?<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario4Service.updateProduct</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>2.</strong> <strong>UPDATE</strong> on table <strong>product</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE id = ?<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario4Service.updateProduct</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>3.</strong> <strong>SELECT</strong> on table <strong>product</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE id = ?<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario4Service.updateProduct</em>
+      </div>
+      <div style="text-align: center; color: #d32f2f;">↓</div>
+      <div class="statement">
+        <strong>4.</strong> <strong>UPDATE</strong> on table <strong>product</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE id = ?<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: DeadlockScenario4Service.updateProduct</em>
+      </div>
+    </div>
+    <div class="suggested-fix">
+      <strong>💡 Suggested Fix:</strong> Use application-level locks to enforce serial execution
+    </div>
+  </div>
+</body>
+</html>

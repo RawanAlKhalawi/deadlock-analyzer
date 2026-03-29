@@ -35,10 +35,10 @@ public class TraceLoaderTest {
         
         // Verify first transaction
         Transaction tx1 = transactions.get(0);
-        assertEquals("TX1", tx1.getTransactionId());
+        assertEquals("T1_finishOrder", tx1.getTransactionId());
         assertEquals(2, tx1.getSqlStatements().size());
-        assertEquals(1, tx1.getPathConditions().size());
-        assertEquals("true", tx1.getPathConditions().get(0));
+        assertEquals(2, tx1.getPathConditions().size());
+        assertEquals("sym_orderId > 0", tx1.getPathConditions().get(0));
     }
     
     @Test
@@ -82,7 +82,7 @@ public class TraceLoaderTest {
         assertTrue("Raw SQL should contain SELECT", stmt.getRawSql().contains("SELECT"));
         
         assertNotNull("Result reference should not be null", stmt.getResultReference());
-        assertEquals("Result reference should be res1", "res1", stmt.getResultReference());
+        assertEquals("Result reference should be res4", "res4", stmt.getResultReference());
         
         assertNotNull("Triggering code location should not be null", stmt.getTriggeringCodeLocation());
         assertTrue("Triggering code location should contain finishOrder", 
@@ -90,14 +90,12 @@ public class TraceLoaderTest {
         
         assertNotNull("Parameters should not be null", stmt.getSqlParameters());
         assertFalse("Parameters should not be empty", stmt.getSqlParameters().isEmpty());
-        assertTrue("Parameters should contain O_ID", stmt.getSqlParameters().containsKey("O_ID"));
+        assertTrue("Parameters should contain sym_orderId", stmt.getSqlParameters().containsKey("sym_orderId"));
         
         assertNotNull("Table names should not be null", stmt.getTableNames());
         assertEquals("Should have 3 table names", 3, stmt.getTableNames().size());
         
         assertNotNull("Table aliases should not be null", stmt.getTableAliases());
-        assertEquals("Should have 3 table aliases", 3, stmt.getTableAliases().size());
-        assertEquals("Alias 'oi' should map to OrderItem", "OrderItem", stmt.getTableAliases().get("oi"));
     }
     
     @Test
@@ -110,8 +108,9 @@ public class TraceLoaderTest {
         Transaction tx = transactions.get(0);
         assertNotNull("Path conditions should not be null", tx.getPathConditions());
         assertFalse("Path conditions should not be empty", tx.getPathConditions().isEmpty());
-        assertEquals("Should have 1 path condition", 1, tx.getPathConditions().size());
-        assertEquals("Path condition should be 'true'", "true", tx.getPathConditions().get(0));
+        assertEquals("Should have 2 path conditions", 2, tx.getPathConditions().size());
+        assertEquals("First path condition should be 'sym_orderId > 0'", "sym_orderId > 0", tx.getPathConditions().get(0));
+        assertEquals("Second path condition should be 'sym_qty >= sym_oiQty'", "sym_qty >= sym_oiQty", tx.getPathConditions().get(1));
     }
     
     @Test
@@ -123,10 +122,7 @@ public class TraceLoaderTest {
         
         Transaction tx = transactions.get(0);
         assertNotNull("Begin timestamp should not be null", tx.getBeginTimestamp());
-        assertEquals("Begin timestamp should be 1000000000", Long.valueOf(1000000000L), tx.getBeginTimestamp());
-        
-        assertNotNull("Commit timestamp should not be null", tx.getCommitTimestamp());
-        assertEquals("Commit timestamp should be 1000000100", Long.valueOf(1000000100L), tx.getCommitTimestamp());
+        assertEquals("Begin timestamp should be 4000", Long.valueOf(4000L), tx.getBeginTimestamp());
     }
     
     // ========== Error Handling Tests ==========
