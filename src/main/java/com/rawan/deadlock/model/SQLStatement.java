@@ -27,7 +27,8 @@ public class SQLStatement {
     private List<Map<String, Object>> queryResult;
     private String triggeringCodeLocation;
     private String transactionId;
-    
+    private int lineNumber;
+
     public SQLStatement() {
         this.sqlParameters = new HashMap<>();
         this.tableNames = new ArrayList<>();
@@ -173,7 +174,11 @@ public class SQLStatement {
     public void setTransactionId(String transactionId) {
         this.transactionId = transactionId;
     }
-    
+
+    public int getLineNumber() { return lineNumber; }
+
+    public void setLineNumber(int lineNumber) { this.lineNumber = lineNumber; }
+
     @Override
     public String toString() {
         return "SQLStatement{" +

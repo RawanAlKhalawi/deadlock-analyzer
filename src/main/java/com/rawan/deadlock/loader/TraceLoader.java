@@ -246,10 +246,27 @@ public class TraceLoader {
         }
         
         // Parse triggering code location
+// Parse triggering code location
         if (stmtNode.has("triggeringCodeLocation")) {
-            stmt.setTriggeringCodeLocation(stmtNode.get("triggeringCodeLocation").asText());
+            String loc = stmtNode.get("triggeringCodeLocation").asText();
+            stmt.setTriggeringCodeLocation(loc);
+
+            // Primary: read dedicated lineNumber field
+            int lineNum = stmtNode.path("lineNumber").asInt(0);
+
+            // Fallback: parse "(line N)" embedded in the string by buildTriggeringLocation.
+            // This handles the case where DeadlockAnalyzer creates new SQLStatement objects
+            // that don't copy the lineNumber field from the loaded transaction.
+            if (lineNum == 0 && loc != null && !loc.isBlank()) {
+                java.util.regex.Matcher m =
+                    java.util.regex.Pattern.compile("\\(line (\\d+)\\)\\s*$").matcher(loc);
+                if (m.find()) {
+                    lineNum = Integer.parseInt(m.group(1));
+                }
+            }
+            stmt.setLineNumber(lineNum);
         }
-        
+
         // Parse parameters
         if (stmtNode.has("parameters") && stmtNode.get("parameters").isObject()) {
             JsonNode paramsNode = stmtNode.get("parameters");

@@ -245,6 +245,15 @@ public class DeadlockReporter {
                 for (int i = 0; i < cycle.size(); i++) {
                     SQLStatement stmt = cycle.get(i);
                     html.append("      <div class=\"statement\">\n");
+                    if (stmt.getTransactionId() != null && !stmt.getTransactionId().isEmpty()) {
+                        // Clean the ID (strip _instance2 suffix if present)
+                        String txDisplay = stmt.getTransactionId().replaceAll("_instance2$", "");
+                        html.append("        <span style=\"background:#4CAF50;color:white;font-size:11px;"
+                                + "padding:2px 7px;border-radius:3px;font-weight:700;margin-right:6px;\">")
+                            .append(escapeHtml(txDisplay))
+                            .append("</span>");
+                    }
+
                     html.append("        <strong>").append(i + 1).append(".</strong> ");
                     html.append("<strong>").append(stmt.getStatementType()).append("</strong> ");
                     
@@ -255,11 +264,42 @@ public class DeadlockReporter {
                     if (stmt.getQueryConditions() != null && !stmt.getQueryConditions().isEmpty()) {
                         html.append("<br>&nbsp;&nbsp;&nbsp;&nbsp;WHERE ").append(escapeHtml(stmt.getQueryConditions()));
                     }
-                    
-                    if (stmt.getTriggeringCodeLocation() != null && !stmt.getTriggeringCodeLocation().isEmpty()) {
-                        html.append("<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: ").append(escapeHtml(stmt.getTriggeringCodeLocation())).append("</em>");
+//
+//                    if (stmt.getTriggeringCodeLocation() != null && !stmt.getTriggeringCodeLocation().isEmpty()) {
+//                        html.append("<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: ").append(escapeHtml(stmt.getTriggeringCodeLocation())).append("</em>");
+//                    }
+
+                    if (stmt.getTriggeringCodeLocation() != null
+                        && !stmt.getTriggeringCodeLocation().isEmpty()) {
+
+                        String rawLoc = stmt.getTriggeringCodeLocation();
+                        int displayLine = stmt.getLineNumber();
+
+                        // Fallback: if lineNumber wasn't copied by the analyzer,
+                        // parse it from the "(line N)" suffix embedded in the string.
+                        if (displayLine == 0) {
+                            java.util.regex.Matcher m =
+                                java.util.regex.Pattern.compile("\\(line (\\d+)\\)\\s*$").matcher(rawLoc);
+                            if (m.find()) {
+                                displayLine = Integer.parseInt(m.group(1));
+                            }
+                        }
+
+                        // Strip "(line N)" from the displayed text — the badge renders it instead.
+                        String displayLoc = rawLoc.replaceAll("\\s*\\(line \\d+\\)\\s*$", "");
+
+                        html.append("<br>&nbsp;&nbsp;&nbsp;&nbsp;<em>Code: ")
+                            .append(escapeHtml(displayLoc));
+                        if (displayLine > 0) {
+                            html.append(" <span style=\"background:#e3f2fd;color:#1565c0;"
+                                    + "font-size:11px;padding:1px 5px;border-radius:3px;"
+                                    + "font-style:normal;font-weight:600;\">")
+                                .append("line ").append(displayLine)
+                                .append("</span>");
+                        }
+                        html.append("</em>");
                     }
-                    
+
                     html.append("\n      </div>\n");
                     
                     if (i < report.getCycle().size() - 1) {
