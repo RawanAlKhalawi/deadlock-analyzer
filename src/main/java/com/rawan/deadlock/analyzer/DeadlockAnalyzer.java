@@ -639,6 +639,13 @@ public class DeadlockAnalyzer {
             
             // Check if cycle has lock conflicts (only on C-edges)
             SCGraph scGraph = cycleToGraph.get(cycle);
+
+            if (!hasHoldAndWaitStructure(cycle, scGraph)) {
+                logger.debug("Cycle rejected: no hold-and-wait structure (no S-edge or "
+                    + "transaction contributes only one statement)");
+                continue;
+            }
+
             if (hasLockConflicts(cycle, scGraph)) {
                 // Verify with Z3 SMT solver
                 boolean isRealDeadlock = deadlockVerifier.verifyDeadlockCycle(cycle);
@@ -808,5 +815,46 @@ public class DeadlockAnalyzer {
     
     public void setDeadlockVerifier(DeadlockVerifier deadlockVerifier) {
         this.deadlockVerifier = deadlockVerifier;
+    }
+
+    /**
+     * Enforces WeSEER's hold-and-wait structure: every transaction whose
+     * statements appear in the cycle must contribute at least one
+     * predecessor-successor pair connected by an S-edge inside the cycle.
+     * A cycle of pure C-edges (each transaction contributes only one
+     * statement) is not a hold-and-wait scenario — it is just pairwise
+     * conflict that resolves to sequential execution at runtime.
+     *
+     * Returns true if the cycle has the required hold-and-wait structure.
+     */
+    private boolean hasHoldAndWaitStructure(List<SQLStatement> cycle, SCGraph scGraph) {
+        if (cycle == null || cycle.size() < 2 || scGraph == null) return false;
+
+        // Group statements in the cycle by their owning transaction instance.
+        Map<String, Integer> stmtsPerTx = new HashMap<>();
+        for (SQLStatement s : cycle) {
+            String txId = s.getTransactionId();
+            if (txId == null) return false;
+            stmtsPerTx.merge(txId, 1, Integer::sum);
+        }
+
+        // Each transaction in the cycle must contribute >=2 statements,
+        // AND at least one consecutive (i, i+1) pair in the cycle must be
+        // an S-edge (same transaction, sequential within it).
+        boolean anySEdge = false;
+        for (int i = 0; i < cycle.size(); i++) {
+            SQLStatement a = cycle.get(i);
+            SQLStatement b = cycle.get((i + 1) % cycle.size());
+            if (scGraph.findEdgeType(a, b) == SCGraph.EdgeType.S_EDGE) {
+                anySEdge = true;
+                break;
+            }
+        }
+        if (!anySEdge) return false;
+
+        for (Map.Entry<String, Integer> e : stmtsPerTx.entrySet()) {
+            if (e.getValue() < 2) return false;
+        }
+        return true;
     }
 }
